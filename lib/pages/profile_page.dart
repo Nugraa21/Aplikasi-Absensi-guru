@@ -40,10 +40,10 @@ class _ProfilePageState extends State<ProfilePage> {
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.08),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.green.withOpacity(0.2)), // Hijau
+            border: Border.all(color: Colors.green.withOpacity(0.2)),
             boxShadow: [
               BoxShadow(color: Colors.green.withOpacity(0.1), blurRadius: 10),
-            ], // Shadow
+            ],
           ),
           child: child,
         ),
@@ -113,14 +113,6 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ],
       ),
-    );
-  }
-
-  Future<void> logout() async {
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const SizedBox.shrink()),
-      (r) => false,
     );
   }
 
@@ -196,7 +188,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               const SizedBox(height: 8),
               OutlinedButton(
-                onPressed: _changePassword, // Fitur baru
+                onPressed: _changePassword,
                 style: OutlinedButton.styleFrom(foregroundColor: Colors.green),
                 child: const Text("Ubah Password"),
               ),

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; // Import fix untuk DateFormat
 import '../services/db_service.dart';
 
 class UserDetailPage extends StatefulWidget {
@@ -57,6 +58,16 @@ class _UserDetailPageState extends State<UserDetailPage> {
               child: CircularProgressIndicator(color: Colors.green),
             );
           final list = snap.data ?? [];
+          final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+          final todayAttendance = list
+              .where((a) => a['date'] == today)
+              .toList();
+          final hasCheckIn = todayAttendance.any(
+            (a) => a['type'] == 'masuk' && (a['approved'] ?? 0) == 1,
+          );
+          final hasCheckOut = todayAttendance.any(
+            (a) => a['type'] == 'pulang' && (a['approved'] ?? 0) == 1,
+          );
           return RefreshIndicator(
             onRefresh: _refresh,
             color: Colors.green,
@@ -65,7 +76,6 @@ class _UserDetailPageState extends State<UserDetailPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Info user
                   Card(
                     elevation: 4,
                     child: Padding(
@@ -106,7 +116,37 @@ class _UserDetailPageState extends State<UserDetailPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  // Riwayat absensi
+                  Card(
+                    color: hasCheckIn && hasCheckOut
+                        ? Colors.green[50]!
+                        : Colors.orange[50]!,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          const Text(
+                            "Status Hari Ini",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(today),
+                          Text(
+                            hasCheckIn
+                                ? "✓ Masuk: Approved"
+                                : "• Masuk: Belum/Tidak Approved",
+                          ),
+                          Text(
+                            hasCheckOut
+                                ? "✓ Pulang: Approved"
+                                : "• Pulang: Belum/Tidak Approved",
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   Text(
                     "Riwayat Absensi (${list.length})",
                     style: const TextStyle(
@@ -145,10 +185,7 @@ class _UserDetailPageState extends State<UserDetailPage> {
                                   )
                                 : null,
                             title: Text(
-                              "${a['date']} ${a['time']}",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                              ),
+                              "${a['date']} ${a['time']} - ${a['type'].toUpperCase()}",
                             ),
                             subtitle: Text(
                               "Lokasi: ${a['location']}\nStatus: ${approved ? 'Approved' : 'Pending'}",

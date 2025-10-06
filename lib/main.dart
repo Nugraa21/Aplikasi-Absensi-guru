@@ -14,7 +14,7 @@ class AbsensiApp extends StatelessWidget {
     return MaterialApp(
       title: 'Absensi Guru',
       theme: ThemeData(
-        primarySwatch: Colors.green, // Hijau manis sebagai primary
+        primarySwatch: Colors.green,
         scaffoldBackgroundColor: Colors.grey[50],
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green[500]!),

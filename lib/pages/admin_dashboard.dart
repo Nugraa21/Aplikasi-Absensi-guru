@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Untuk DateFormat di DBService
+import 'package:intl/intl.dart';
 import '../services/db_service.dart';
-import 'user_detail_page.dart'; // Halaman baru
+import 'user_detail_page.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -33,12 +33,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
     pendingUsers = await DBService.getPendingUsers();
     allUsers = await DBService.getAllUsers();
     allAttendance = await DBService.getAllAttendance();
-    todayAttendanceCount =
-        await DBService.getTodayAttendanceCount(); // Summary baru
+    todayAttendanceCount = await DBService.getTodayAttendanceCount();
     final r = await DBService.getSetting('attendance_radius');
     radiusCtrl.text = r.isNotEmpty ? r : '1000';
 
-    // Debug print: Cek data di console
     print(
       'Loaded: Pending=${pendingUsers.length}, AllUsers=${allUsers.length}, Attendance=${allAttendance.length}, Today=${todayAttendanceCount}',
     );
@@ -47,20 +45,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Widget _glass({required Widget child}) => ClipRRect(
-    borderRadius: BorderRadius.circular(16), // Lebih bulat
+    borderRadius: BorderRadius.circular(16),
     child: BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // Blur lebih halus
+      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.1),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Colors.green.withOpacity(0.2),
-          ), // Border hijau
+          border: Border.all(color: Colors.green.withOpacity(0.2)),
           boxShadow: [
             BoxShadow(color: Colors.green.withOpacity(0.1), blurRadius: 10),
-          ], // Shadow lembut
+          ],
         ),
         child: child,
       ),
@@ -120,7 +116,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       ).showSnackBar(const SnackBar(content: Text("Radius disimpan")));
   }
 
-  // Summary Cards (fitur baru)
   Widget _buildSummary() => Padding(
     padding: const EdgeInsets.all(16),
     child: Row(
@@ -178,7 +173,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       );
 
   Widget _pendingUsersTab() => Container(
-    // Wrap di Container biar height aman
     height: double.infinity,
     child: _glass(
       child: Column(
@@ -200,7 +194,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
           const SizedBox(height: 12),
           if (pendingUsers.isEmpty)
             const Expanded(
-              // Expanded di sini biar center fill space
               child: Center(
                 child: Text(
                   "Tidak ada pendaftaran baru.",
@@ -254,7 +247,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
   );
 
   Widget _allUsersTab() => Container(
-    // Wrap di Container
     height: double.infinity,
     child: _glass(
       child: Column(
@@ -269,7 +261,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
             child: LayoutBuilder(
               builder: (ctx, constraints) {
                 if (constraints.maxWidth > 600) {
-                  // Grid untuk layar lebar
                   return GridView.builder(
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
@@ -280,7 +271,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     itemBuilder: (ctx, i) => _userCard(allUsers[i]),
                   );
                 } else {
-                  // List untuk mobile
                   return allUsers.isEmpty
                       ? const Center(
                           child: Text(
@@ -367,7 +357,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
   );
 
   Widget _attendanceTab() => Container(
-    // Wrap di Container
     height: double.infinity,
     child: _glass(
       child: Column(
@@ -405,8 +394,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 )
                               : null,
                           title: Text(
-                            "${a['date']} ${a['time']}",
-                            style: const TextStyle(fontWeight: FontWeight.w500),
+                            "${a['date']} ${a['time']} - ${a['type'].toUpperCase()}",
                           ),
                           subtitle: FutureBuilder<Map<String, dynamic>?>(
                             future: DBService.getUserById(a['userId']),
@@ -426,8 +414,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                   onPressed: () => _approveAttendance(a['id']),
                                 )
                               : null,
-                          onLongPress: () =>
-                              _denyAttendance(a['id']), // Long press untuk deny
+                          onLongPress: () => _denyAttendance(a['id']),
                         ),
                       );
                     },
@@ -439,7 +426,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
   );
 
   Widget _radiusTab() => Container(
-    // Wrap di Container
     height: double.infinity,
     child: _glass(
       child: Column(
@@ -470,7 +456,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               child: const Text("Simpan"),
             ),
           ),
-          const Spacer(), // Biar content di atas, space di bawah
+          const Spacer(),
         ],
       ),
     ),
@@ -478,7 +464,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    // Hapus Expanded dari list tabs – sekarang list biasa
     final tabs = [
       _pendingUsersTab(),
       _allUsersTab(),
@@ -488,7 +473,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Dashboard Admin"),
-        backgroundColor: Colors.green, // Hijau
+        backgroundColor: Colors.green,
         foregroundColor: Colors.white,
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadAll),
@@ -503,13 +488,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: Column(
                   children: [
-                    _buildSummary(), // Summary cards
+                    _buildSummary(),
                     const SizedBox(height: 16),
-                    // Gunakan Container biar fill space, tanpa fixed height
                     Container(
-                      height:
-                          MediaQuery.of(context).size.height *
-                          0.6, // Adjust ~60% screen, biar scrollable
+                      height: MediaQuery.of(context).size.height * 0.6,
                       width: double.infinity,
                       child: tabs[_currentIndex],
                     ),

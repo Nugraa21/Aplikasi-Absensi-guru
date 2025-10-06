@@ -37,9 +37,7 @@ class _RegisterPageState extends State<RegisterPage> {
         email: emailCtrl.text.trim(),
         password: passCtrl.text.trim(),
         isAdmin: asAdmin ? 1 : 0,
-        isApproved: asAdmin
-            ? 1
-            : 0, // admin creation auto approved; normal guru pending
+        isApproved: asAdmin ? 1 : 0,
       );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -63,7 +61,7 @@ class _RegisterPageState extends State<RegisterPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Daftar Akun"),
-        backgroundColor: Colors.green, // Sesuaikan tema
+        backgroundColor: Colors.green,
       ),
       body: Center(
         child: Container(

@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:geolocator/geolocator.dart';
 import '../services/location_service.dart';
 import '../services/db_service.dart';
-import 'package:geolocator/geolocator.dart'; // Untuk Position
 
 class AttendancePage extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -19,7 +19,7 @@ class _AttendancePageState extends State<AttendancePage> {
   CameraController? _controller;
   bool loading = false;
   double radiusMeters = 1000;
-  // center approx SMK N 2 Yogyakarta
+  String selectedType = 'masuk';
   final double centerLat = -7.797068;
   final double centerLng = 110.370529;
 
@@ -46,8 +46,31 @@ class _AttendancePageState extends State<AttendancePage> {
     if (mounted) setState(() {});
   }
 
-  Future<void> _takeAndSave() async {
+  bool _isValidTime(String type) {
+    final now = DateTime.now();
+    final hour = now.hour;
+    if (type == 'masuk') {
+      return hour >= 6 && hour < 9;
+    } else {
+      return hour >= 15 && hour <= 18;
+    }
+  }
+
+  Future<void> _takeAndSave(String type) async {
     if (_controller == null || !_controller!.value.isInitialized) return;
+    if (!_isValidTime(type)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            type == 'masuk'
+                ? "Absen masuk hanya jam 6:00-9:00 pagi!"
+                : "Absen pulang hanya jam 15:00-18:00 sore!",
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
     setState(() => loading = true);
 
     final pos = await LocationService.getCurrentPosition();
@@ -82,7 +105,7 @@ class _AttendancePageState extends State<AttendancePage> {
     final xfile = await _controller!.takePicture();
     final dir = await getApplicationDocumentsDirectory();
     final savePath =
-        '${dir.path}/absen_${widget.user['id']}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        '${dir.path}/absen_${widget.user['id']}_${type}_${DateTime.now().millisecondsSinceEpoch}.jpg';
     await File(xfile.path).copy(savePath);
 
     final date = DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -93,14 +116,14 @@ class _AttendancePageState extends State<AttendancePage> {
       time,
       '${pos.latitude},${pos.longitude}',
       savePath,
+      type,
     );
 
     setState(() => loading = false);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          "Absensi tersimpan (pending). Menunggu konfirmasi admin.",
-        ),
+      SnackBar(
+        content: Text("Absen $type berhasil! (pending admin)"),
+        backgroundColor: Colors.green,
       ),
     );
   }
@@ -124,7 +147,22 @@ class _AttendancePageState extends State<AttendancePage> {
                 style: const TextStyle(color: Colors.black54),
               ),
               const SizedBox(height: 8),
-              // Preview lokasi baru
+              DropdownButton<String>(
+                value: selectedType,
+                isExpanded: true,
+                items: const [
+                  DropdownMenuItem(
+                    value: 'masuk',
+                    child: Text('Absen Masuk (6:00 pagi)'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'pulang',
+                    child: Text('Absen Pulang (4:00 sore)'),
+                  ),
+                ],
+                onChanged: (v) => setState(() => selectedType = v!),
+              ),
+              const SizedBox(height: 8),
               FutureBuilder<Position?>(
                 future: LocationService.getCurrentPosition(),
                 builder: (ctx, snap) {
@@ -152,7 +190,7 @@ class _AttendancePageState extends State<AttendancePage> {
                           Expanded(
                             child: Text(
                               inRadius
-                                  ? "Anda di dalam radius absensi"
+                                  ? "Di dalam radius SMK"
                                   : "Di luar radius (${(dist / 1000).toStringAsFixed(2)} km)",
                             ),
                           ),
@@ -165,15 +203,15 @@ class _AttendancePageState extends State<AttendancePage> {
               ),
               const SizedBox(height: 8),
               ElevatedButton.icon(
-                onPressed: loading ? null : _takeAndSave,
+                onPressed: loading ? null : () => _takeAndSave(selectedType),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green, // Hijau
+                  backgroundColor: Colors.green,
                   minimumSize: const Size.fromHeight(48),
                 ),
                 icon: const Icon(Icons.camera_alt),
                 label: loading
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text("Kirim Selfie & Absen"),
+                    : Text("Absen ${selectedType.toUpperCase()}"),
               ),
             ],
           ),

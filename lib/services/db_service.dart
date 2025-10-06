@@ -1,9 +1,8 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'package:intl/intl.dart'; // Tambah untuk DateFormat
+import 'package:intl/intl.dart';
 
 class DBService {
-  // --- Get user by ID ---
   static Future<Map<String, dynamic>?> getUserById(int id) async {
     final db = await getDB();
     final res = await db.query('users', where: 'id = ?', whereArgs: [id]);
@@ -17,7 +16,7 @@ class DBService {
     final path = join(await getDatabasesPath(), 'absensi.db');
     _db = await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: (db, v) async {
         await db.execute('''
         CREATE TABLE users(
@@ -41,6 +40,7 @@ class DBService {
           time TEXT,
           location TEXT,
           photo TEXT,
+          type TEXT DEFAULT 'masuk',
           approved INTEGER DEFAULT 0
         )
       ''');
@@ -51,7 +51,6 @@ class DBService {
           value TEXT
         )
       ''');
-        // default radius setting (meters)
         await db.insert('settings', {
           'id': 1,
           'keyName': 'attendance_radius',
@@ -66,12 +65,18 @@ class DBService {
             );
           } catch (_) {}
         }
+        if (oldV < 3) {
+          try {
+            await db.execute(
+              "ALTER TABLE attendance ADD COLUMN type TEXT DEFAULT 'masuk'",
+            );
+          } catch (_) {}
+        }
       },
     );
     return _db!;
   }
 
-  // --- Users ---
   static Future<int> registerUser({
     required String name,
     required String nip,
@@ -158,13 +163,13 @@ class DBService {
     );
   }
 
-  // --- Attendance ---
   static Future<int> saveAttendance(
     int userId,
     String date,
     String time,
     String location,
     String photoPath,
+    String type,
   ) async {
     final db = await getDB();
     return await db.insert('attendance', {
@@ -173,6 +178,7 @@ class DBService {
       'time': time,
       'location': location,
       'photo': photoPath,
+      'type': type,
       'approved': 0,
     });
   }
@@ -207,7 +213,6 @@ class DBService {
     return await db.delete('attendance', where: 'id=?', whereArgs: [id]);
   }
 
-  // --- Settings ---
   static Future<String> getSetting(String key) async {
     final db = await getDB();
     final res = await db.query(
@@ -237,7 +242,6 @@ class DBService {
     }
   }
 
-  // Method baru untuk cek absensi hari ini per user
   static Future<bool> hasTodayAttendance(int userId) async {
     final db = await getDB();
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -249,7 +253,6 @@ class DBService {
     return res.isNotEmpty;
   }
 
-  // Method baru untuk summary absensi hari ini total
   static Future<int> getTodayAttendanceCount() async {
     final db = await getDB();
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());

@@ -13,6 +13,7 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   DateTime? selectedDate;
+  String selectedType = 'semua';
   late Future<List<Map<String, dynamic>>> _future;
 
   @override
@@ -24,9 +25,6 @@ class _HistoryPageState extends State<HistoryPage> {
 
   Future<void> _loadHistory() async {
     _future = DBService.getAttendance(widget.user['id']);
-    if (selectedDate != null) {
-      // Filter by date if selected (implement query filter di DB jika perlu)
-    }
   }
 
   Future<void> _selectDate() async {
@@ -55,31 +53,63 @@ class _HistoryPageState extends State<HistoryPage> {
           return const Center(
             child: CircularProgressIndicator(color: Colors.green),
           );
-        final list = snap.data ?? [];
+        var list = snap.data ?? [];
+        if (selectedDate != null) {
+          final dateStr = DateFormat('yyyy-MM-dd').format(selectedDate!);
+          list = list.where((a) => a['date'] == dateStr).toList();
+        }
+        if (selectedType != 'semua') {
+          list = list.where((a) => a['type'] == selectedType).toList();
+        }
         return RefreshIndicator(
           onRefresh: _refresh,
           color: Colors.green,
           child: Column(
             children: [
-              // Filter date
               Card(
                 margin: const EdgeInsets.all(16),
-                child: ListTile(
-                  leading: const Icon(Icons.calendar_today),
-                  title: Text(
-                    selectedDate != null
-                        ? DateFormat('yyyy-MM-dd').format(selectedDate!)
-                        : 'Semua Tanggal',
-                  ),
-                  trailing: const Icon(Icons.arrow_drop_down),
-                  onTap: _selectDate,
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.calendar_today),
+                      title: Text(
+                        selectedDate != null
+                            ? DateFormat('yyyy-MM-dd').format(selectedDate!)
+                            : 'Semua Tanggal',
+                      ),
+                      trailing: const Icon(Icons.arrow_drop_down),
+                      onTap: _selectDate,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: DropdownButton<String>(
+                        value: selectedType,
+                        isExpanded: true,
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'semua',
+                            child: Text('Semua Type'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'masuk',
+                            child: Text('Hanya Masuk'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'pulang',
+                            child: Text('Hanya Pulang'),
+                          ),
+                        ],
+                        onChanged: (v) => setState(() => selectedType = v!),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Expanded(
                 child: list.isEmpty
                     ? Center(
                         child: Text(
-                          "Belum ada absensi.",
+                          "Belum ada absensi ${selectedType == 'semua' ? '' : 'type $selectedType'}.",
                           style: TextStyle(color: Colors.grey.shade700),
                         ),
                       )
@@ -107,10 +137,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                     )
                                   : null,
                               title: Text(
-                                "${a['date']} ${a['time']}",
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                ),
+                                "${a['date']} ${a['time']} - ${a['type'].toUpperCase()}",
                               ),
                               subtitle: Text(
                                 "Lokasi: ${a['location']}\nStatus: ${approved ? 'Approved' : 'Pending'}",

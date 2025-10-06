@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/db_service.dart';
 import 'home_page.dart';
-import 'admin_dashboard.dart'; // Import AdminDashboard
-import 'register_page.dart'; // Tambah import ini untuk RegisterPage
+import 'admin_dashboard.dart';
+import 'register_page.dart';
 import '../widgets/custom_button.dart';
 
 class LoginPage extends StatefulWidget {
@@ -38,7 +38,6 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    // Admin langsung ke dashboard
     if ((user['isAdmin'] ?? 0) == 1) {
       Navigator.pushReplacement(
         context,
@@ -62,11 +61,7 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.school,
-                size: 64,
-                color: Colors.green,
-              ), // Icon sekolah
+              const Icon(Icons.school, size: 64, color: Colors.green),
               const SizedBox(height: 8),
               const Text(
                 "Absensi Guru",
