@@ -1,3 +1,6 @@
+// lib/pages/history_page.dart
+// Page to view attendance history with filters and popups for details.
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -20,10 +23,6 @@ class _HistoryPageState extends State<HistoryPage> {
   void initState() {
     super.initState();
     selectedDate = DateTime.now();
-    _loadHistory();
-  }
-
-  Future<void> _loadHistory() async {
     _future = DBService.getAttendance(widget.user['id']);
   }
 
@@ -34,14 +33,39 @@ class _HistoryPageState extends State<HistoryPage> {
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
     );
-    if (picked != null) {
-      setState(() => selectedDate = picked);
-      await _loadHistory();
-    }
+    if (picked != null) setState(() => selectedDate = picked);
   }
 
   Future<void> _refresh() async {
-    await _loadHistory();
+    setState(() {
+      _future = DBService.getAttendance(widget.user['id']);
+    });
+  }
+
+  void _showPopup(Map<String, dynamic> a) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text("${a['date']} ${a['time']} - ${a['type'].toUpperCase()}"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (a['photo'] != null)
+              Image.file(File(a['photo']), height: 200, fit: BoxFit.cover),
+            Text("Lokasi: ${a['location']}"),
+            Text(
+              "Status: ${(a['approved'] ?? 0) == 1 ? 'Approved' : 'Pending'}",
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Tutup"),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -113,39 +137,30 @@ class _HistoryPageState extends State<HistoryPage> {
                           style: TextStyle(color: Colors.grey.shade700),
                         ),
                       )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(12),
-                        itemCount: list.length,
-                        itemBuilder: (ctx, i) {
-                          final a = list[i];
-                          final approved = (a['approved'] ?? 0) == 1;
-                          return Card(
-                            margin: const EdgeInsets.symmetric(vertical: 8),
-                            color: approved
-                                ? Colors.green[50]
-                                : Colors.grey[50],
-                            child: ListTile(
-                              leading: a['photo'] != null
-                                  ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.file(
-                                        File(a['photo']),
-                                        width: 64,
-                                        height: 64,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    )
-                                  : null,
-                              title: Text(
-                                "${a['date']} ${a['time']} - ${a['type'].toUpperCase()}",
-                              ),
-                              subtitle: Text(
-                                "Lokasi: ${a['location']}\nStatus: ${approved ? 'Approved' : 'Pending'}",
-                              ),
-                              isThreeLine: true,
-                            ),
-                          );
-                        },
+                    : SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: DataTable(
+                          columns: const [
+                            DataColumn(label: Text('Tanggal')),
+                            DataColumn(label: Text('Waktu')),
+                            DataColumn(label: Text('Type')),
+                            DataColumn(label: Text('Status')),
+                          ],
+                          rows: list.map((a) {
+                            final approved = (a['approved'] ?? 0) == 1;
+                            return DataRow(
+                              onSelectChanged: (selected) => _showPopup(a),
+                              cells: [
+                                DataCell(Text(a['date'])),
+                                DataCell(Text(a['time'])),
+                                DataCell(Text(a['type'].toUpperCase())),
+                                DataCell(
+                                  Text(approved ? 'Approved' : 'Pending'),
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                        ),
                       ),
               ),
             ],

@@ -1,3 +1,6 @@
+// lib/widgets/custom_button.dart
+// Custom widget for buttons used throughout the app for consistent styling (filled or outlined).
+
 import 'package:flutter/material.dart';
 
 class CustomButton extends StatelessWidget {

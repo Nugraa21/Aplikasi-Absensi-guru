@@ -1,8 +1,13 @@
+// lib/pages/home_page.dart
+// Home page with bottom navigation for attendance, history, requests (for teachers), and profile.
+// Fixed: Removed const from non-const expressions in status text and made items non-const due to conditional.
+
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Import fix untuk DateFormat
+import 'package:intl/intl.dart';
 import 'attendance_page.dart';
 import 'history_page.dart';
 import 'profile_page.dart';
+import 'request_page.dart';
 import 'admin_dashboard.dart';
 import 'login_page.dart';
 import '../services/db_service.dart';
@@ -24,9 +29,11 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    final isAdmin = (widget.user['isAdmin'] ?? 0) == 1;
     pages = [
       AttendancePage(user: widget.user),
       HistoryPage(user: widget.user),
+      if (!isAdmin) RequestPage(user: widget.user),
       ProfilePage(user: widget.user),
     ];
     _loadTodayStatus();
@@ -90,10 +97,10 @@ class _HomePageState extends State<HomePage> {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               color: hasCheckInToday && hasCheckOutToday
-                  ? Colors.green[100]!
+                  ? Colors.green[100]
                   : hasCheckInToday
-                  ? Colors.orange[100]!
-                  : Colors.red[100]!,
+                  ? Colors.orange[100]
+                  : Colors.red[100],
               child: Column(
                 children: [
                   Text(
@@ -128,13 +135,24 @@ class _HomePageState extends State<HomePage> {
           setState(() => currentIndex = i);
           if (i == 1) _loadTodayStatus();
         },
-        items: const [
-          BottomNavigationBarItem(
+        items: [
+          const BottomNavigationBarItem(
             icon: Icon(Icons.camera_alt),
             label: 'Absensi',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Riwayat'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'Riwayat',
+          ),
+          if (!isAdmin)
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.event_note),
+              label: 'Izin',
+            ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profil',
+          ),
         ],
       ),
     );

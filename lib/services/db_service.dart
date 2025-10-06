@@ -1,3 +1,6 @@
+// lib/services/db_service.dart
+// Database service using SQLite for user management, attendance, settings, and requests. Handles CRUD operations.
+
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:intl/intl.dart';
@@ -16,7 +19,7 @@ class DBService {
     final path = join(await getDatabasesPath(), 'absensi.db');
     _db = await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: (db, v) async {
         await db.execute('''
         CREATE TABLE users(
@@ -51,6 +54,17 @@ class DBService {
           value TEXT
         )
       ''');
+        await db.execute('''
+        CREATE TABLE requests(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          userId INTEGER,
+          date TEXT,
+          time TEXT,
+          reason TEXT,
+          type TEXT,
+          approved INTEGER DEFAULT 0
+        )
+      ''');
         await db.insert('settings', {
           'id': 1,
           'keyName': 'attendance_radius',
@@ -70,6 +84,21 @@ class DBService {
             await db.execute(
               "ALTER TABLE attendance ADD COLUMN type TEXT DEFAULT 'masuk'",
             );
+          } catch (_) {}
+        }
+        if (oldV < 4) {
+          try {
+            await db.execute('''
+            CREATE TABLE requests(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              userId INTEGER,
+              date TEXT,
+              time TEXT,
+              reason TEXT,
+              type TEXT,
+              approved INTEGER DEFAULT 0
+            )
+            ''');
           } catch (_) {}
         }
       },
@@ -137,6 +166,7 @@ class DBService {
   static Future<int> denyUser(int id) async {
     final db = await getDB();
     await db.delete('attendance', where: 'userId=?', whereArgs: [id]);
+    await db.delete('requests', where: 'userId=?', whereArgs: [id]);
     return await db.delete('users', where: 'id=?', whereArgs: [id]);
   }
 
@@ -183,6 +213,16 @@ class DBService {
     });
   }
 
+  static Future<int> updateAttendanceTime(int id, String newTime) async {
+    final db = await getDB();
+    return await db.update(
+      'attendance',
+      {'time': newTime},
+      where: 'id=?',
+      whereArgs: [id],
+    );
+  }
+
   static Future<List<Map<String, dynamic>>> getAttendance(int userId) async {
     final db = await getDB();
     return await db.query(
@@ -211,6 +251,53 @@ class DBService {
   static Future<int> denyAttendance(int id) async {
     final db = await getDB();
     return await db.delete('attendance', where: 'id=?', whereArgs: [id]);
+  }
+
+  static Future<int> saveRequest(
+    int userId,
+    String date,
+    String time,
+    String reason,
+    String type,
+  ) async {
+    final db = await getDB();
+    return await db.insert('requests', {
+      'userId': userId,
+      'date': date,
+      'time': time,
+      'reason': reason,
+      'type': type,
+      'approved': 0,
+    });
+  }
+
+  static Future<List<Map<String, dynamic>>> getRequests({int? userId}) async {
+    final db = await getDB();
+    if (userId != null) {
+      return await db.query(
+        'requests',
+        where: 'userId=?',
+        whereArgs: [userId],
+        orderBy: 'date DESC, time DESC',
+      );
+    } else {
+      return await db.query('requests', orderBy: 'date DESC, time DESC');
+    }
+  }
+
+  static Future<int> approveRequest(int id) async {
+    final db = await getDB();
+    return await db.update(
+      'requests',
+      {'approved': 1},
+      where: 'id=?',
+      whereArgs: [id],
+    );
+  }
+
+  static Future<int> denyRequest(int id) async {
+    final db = await getDB();
+    return await db.delete('requests', where: 'id=?', whereArgs: [id]);
   }
 
   static Future<String> getSetting(String key) async {

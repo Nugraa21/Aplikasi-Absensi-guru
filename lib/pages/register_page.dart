@@ -1,3 +1,6 @@
+// lib/pages/register_page.dart
+// Page for user registration, including admin toggle.
+
 import 'package:flutter/material.dart';
 import '../services/db_service.dart';
 import '../widgets/custom_button.dart';

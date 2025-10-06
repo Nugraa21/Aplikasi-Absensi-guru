@@ -1,3 +1,6 @@
+// lib/pages/login_page.dart
+// Login page for users and admins.
+
 import 'package:flutter/material.dart';
 import '../services/db_service.dart';
 import 'home_page.dart';

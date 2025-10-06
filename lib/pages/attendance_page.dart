@@ -1,9 +1,13 @@
+// lib/pages/attendance_page.dart
+// Page for taking attendance with camera (face tracking-like overlay), location check.
+// Fixed: Added missing import for Position from geolocator.
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:path_provider/path_provider.dart';
 import '../services/location_service.dart';
 import '../services/db_service.dart';
 
@@ -49,11 +53,8 @@ class _AttendancePageState extends State<AttendancePage> {
   bool _isValidTime(String type) {
     final now = DateTime.now();
     final hour = now.hour;
-    if (type == 'masuk') {
-      return hour >= 6 && hour < 9;
-    } else {
-      return hour >= 15 && hour <= 18;
-    }
+    if (type == 'masuk') return hour >= 6 && hour < 9;
+    return hour >= 15 && hour <= 18;
   }
 
   Future<void> _takeAndSave(String type) async {
@@ -130,14 +131,30 @@ class _AttendancePageState extends State<AttendancePage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_controller == null || !_controller!.value.isInitialized) {
+    if (_controller == null || !_controller!.value.isInitialized)
       return const Center(
         child: CircularProgressIndicator(color: Colors.green),
       );
-    }
     return Column(
       children: [
-        Expanded(child: CameraPreview(_controller!)),
+        Expanded(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              CameraPreview(_controller!),
+              Center(
+                child: Container(
+                  width: 250,
+                  height: 350,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
         Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -177,7 +194,7 @@ class _AttendancePageState extends State<AttendancePage> {
                     return Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: inRadius ? Colors.green[100]! : Colors.red[100]!,
+                        color: inRadius ? Colors.green[100] : Colors.red[100],
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(

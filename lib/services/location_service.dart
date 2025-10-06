@@ -1,3 +1,6 @@
+// lib/services/location_service.dart
+// Service for handling location permissions, getting current position, and calculating distances.
+
 import 'package:geolocator/geolocator.dart';
 import 'dart:math';
 

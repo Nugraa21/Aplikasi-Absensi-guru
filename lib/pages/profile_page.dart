@@ -1,8 +1,13 @@
+// lib/pages/profile_page.dart
+// Page for viewing and editing user profile, including photo upload and password change.
+// Fixed: Added missing import for LoginPage.
+
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/db_service.dart';
+import 'login_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -197,12 +202,12 @@ class _ProfilePageState extends State<ProfilePage> {
                 onPressed: () {
                   Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(builder: (_) => const SizedBox.shrink()),
+                    MaterialPageRoute(builder: (_) => const LoginPage()),
                     (r) => false,
                   );
                 },
                 style: OutlinedButton.styleFrom(foregroundColor: Colors.green),
-                child: const Text("Logout (kembali ke login)"),
+                child: const Text("Logout"),
               ),
             ],
           ),
